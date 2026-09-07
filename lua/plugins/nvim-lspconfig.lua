@@ -1,36 +1,48 @@
+-- 言語固有の設定を持たない汎用 LSP 設定。
+-- 使いたい言語のサーバー名を `servers` に追加するだけ。
+-- 追加されたサーバーは mason により自動インストールされ、
+-- 実行環境（バイナリ/ランタイム）が無い環境ではエラーではなく
+-- 通知とともに自動でスキップされる。
+--
+-- 例: "ts_ls" (TypeScript/JS), "gopls" (Go), "solargraph" (Ruby),
+--     "pyright" (Python), "clangd" (C/C++), "rust_analyzer" (Rust)
+local servers = { "lua_ls" }
+
 return {
   "neovim/nvim-lspconfig",
   event = { "BufReadPre", "BufNewFile" },
   dependencies = {
     { "mason-org/mason.nvim", opts = {} },
-    { "mason-org/mason-lspconfig.nvim", opts = { ensure_installed = { "lua_ls", "ts_ls", "solargraph", "gopls" } } },
+    { "mason-org/mason-lspconfig.nvim", opts = { ensure_installed = servers } },
     -- LSP capabilities (snippet 対応等) を cmp 経由で付与する
     "hrsh7th/cmp-nvim-lsp",
   },
   config = function()
     -- Neovim 0.11+ の新API (vim.lsp.config / vim.lsp.enable) を使用。
     -- 旧 require("lspconfig") / mason-lspconfig handlers は廃止済み。
-    local servers = { "lua_ls", "ts_ls", "solargraph", "gopls" }
 
     -- nvim-cmp の capabilities（snippet 等）を全サーバーへ適用
     vim.lsp.config("*", {
       capabilities = require("cmp_nvim_lsp").default_capabilities(),
     })
 
-    -- solargraph は bundler 管理下で起動し、診断/補完/整形を有効化
-    vim.lsp.config("solargraph", {
-      cmd = { "bundle", "exec", "solargraph", "stdio" },
-      settings = {
-        solargraph = {
-          diagnostics = true,
-          completion = true,
-          formatting = true,
-        },
-      },
-    })
-
+    -- 起動可能なサーバーだけ有効化する
+    -- （mason の PATH 反映は dependencies の setup で済んでいる前提）
     for _, server in ipairs(servers) do
-      vim.lsp.enable(server)
+      local ok, cfg = pcall(function()
+        return vim.lsp.config[server]
+      end)
+      local cmd = ok and cfg and cfg.cmd and cfg.cmd[1] or nil
+      local available = cmd and vim.fn.executable(cmd) == 1
+      if available then
+        vim.lsp.enable(server)
+      else
+        vim.notify(
+          ("LSP `%s` は実行環境が見つからないため無効化しています"):format(server),
+          vim.log.levels.INFO,
+          { title = "nvim-lspconfig" }
+        )
+      end
     end
 
     vim.diagnostic.config({})

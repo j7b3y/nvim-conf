@@ -25,8 +25,8 @@ nvim
 | `curl` / `tar` | lazygit 自動導入 | 初回のみ |
 | `make` / `gcc` | 一部プラグインのビルド | ほぼ必ず導入済み |
 
-> LSP サーバー（lua_ls / ts_ls / solargraph / gopls）は mason が `~/.local/share/nvim/mason` に自動ダウンロードします。システムへのインストールは行いません。
-> solargraph は `bundle exec solargraph` で起動するため、Ruby プロジェクト側に Gemfile への追加が必要です。
+> LSP は言語固有の設定を含まない汎用構成です。`lua/plugins/nvim-lspconfig.lua` の `servers` にサーバー名を追加すると、mason が `~/.local/share/nvim/mason` へ自動インストールします（システムへのインストールは行いません）。デフォルトは nvim 設定編集用の `lua_ls` のみ。
+> 実行環境（node / go / bundler など）が無いサーバーは、エラーにならないよう自動で無効化され、その旨が通知されます。
 
 ## 画面レイアウト（VSCode 風）
 
@@ -92,8 +92,6 @@ nvimにはモードがあります。起動直後は **ノーマルモード** �
 | エクスプローラー（左サイドバー）を開閉 | `<leader>e` | サイドバーのエクスプローラー |
 | ファイラ（oil.nvim）を開く（親ディレクトリ） | `-` | なし |
 | 開いているファイル（バッファ）一覧 | `<leader>fb` | `Ctrl+Tab` |
-| 関連ファイルに切り替え（実装 ↔ テストなど） | `<leader>oo` | なし |
-| 関連ファイルを新しいタブで開く | `<leader>ot` | なし |
 
 ### ファイラ（oil.nvim）の中での操作
 
@@ -114,7 +112,7 @@ nvimにはモードがあります。起動直後は **ノーマルモード** �
 
 ## コードを読む・定義へジャンプ
 
-LSP（Ruby は solargraph）が動いているバッファでのみ有効。`:checkhealth` や `:Inspect` で起動状況を確認できます。
+LSP が動いているバッファでのみ有効（有効な言語は `lua/plugins/nvim-lspconfig.lua` の `servers` を参照）。`:checkhealth` や `:Inspect` で起動状況を確認できます。
 
 | やりたいこと | キー | VSCodeの対応 |
 |---|---|---|

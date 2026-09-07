@@ -7,11 +7,11 @@ return {
     preset = "helix",
     -- <leader> プレフィックスのグループ名（README.md の見出しと対応）
     spec = {
-      { "<leader>f", group = "検索 (Telescope)" },
+      { "<leader>f", group = "検索 (snacks.picker)" },
       { "<leader>g", group = "Git / GitHub" },
       { "<leader>r", group = "Grep & 置換 (grug-far)" },
       { "<leader>s", group = "検索 / セッション" },
-      { "<leader>o", group = "関連ファイル (other.nvim)" },
+      { "<leader>w", group = "ウィンドウ操作" },
       { "<leader>c", group = "パスをコピー" },
     },
   },
