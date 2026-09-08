@@ -4,9 +4,16 @@ vim.g.maplocalleader = " "
 require("config.lazy")
 require("config.layout")
 require("config.lazygit")
+require("config.opencode_term").setup()
 
 vim.opt.number = true
-vim.opt.relativenumber = true
+-- ステータスラインは画面最下部に1本化(lualineのglobalstatusと連動)。
+-- 横の窓境が白線(WinSeparator)になり、モード表示はlualine側に一本化する
+vim.opt.laststatus = 3
+vim.opt.showmode = false
+-- 相対行番号は無効化: 有効化するとカーソル行だけ絶対行番号・他は相対距離に
+-- なるため「1,2,3…と順番に並ばない」表示になる。VSCode風の絶対行番号のみにする
+vim.opt.relativenumber = false
 vim.opt.cursorline = true
 vim.opt.helplang = 'ja'
 vim.opt.clipboard = "unnamedplus"

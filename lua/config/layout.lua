@@ -1,28 +1,38 @@
 -- VSCode 風レイアウトの支援設定
--- ・エディタ領域は最大2分割
+-- ・エディタ領域は分割なし(単一画面)
 -- ・ウィンドウ間移動を Ctrl+hjkl で
--- ・分割系キーマップ
+-- ・リサイズ系キーマップ
 
 -- ==============================
--- エディタ領域の最大分割数を強制
+-- エディタ領域は単一画面に固定
+-- （下部ターミナルと併用しても狭くならないよう）
 -- （フロート/ターミナル/quickfix等はカウントしない）
 -- ==============================
-vim.g.max_editor_windows = 2
+vim.g.max_editor_windows = 1
+
+local function is_editor_win(win)
+  if not vim.api.nvim_win_is_valid(win) then
+    return false
+  end
+  local cfg = vim.api.nvim_win_get_config(win)
+  if cfg.relative ~= "" or cfg.external then
+    return false
+  end
+  local buf = vim.api.nvim_win_get_buf(win)
+  -- ターミナル(buftype=terminal: シェル・opencodeとも)は数えない
+  -- ツール系(oilは非listed、grug-far/pickerはnofile)は buftype で除外される
+  return vim.bo[buf].buflisted and vim.bo[buf].buftype == ""
+end
 
 local function editor_windows()
-  local n = 0
-  for _, win in ipairs(vim.api.nvim_list_wins()) do
-    if vim.api.nvim_win_is_valid(win) then
-      local cfg = vim.api.nvim_win_get_config(win)
-      local buf = vim.api.nvim_win_get_buf(win)
-      local is_float = cfg.relative ~= "" or cfg.external
-      local is_editor = vim.bo[buf].buflisted and vim.bo[buf].buftype == ""
-      if not is_float and is_editor then
-        n = n + 1
-      end
+  local wins = {}
+  -- 同一タブページ内のみ数える(別タブのdiff等を邪魔しない)
+  for _, win in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
+    if is_editor_win(win) then
+      table.insert(wins, win)
     end
   end
-  return n
+  return wins
 end
 
 vim.api.nvim_create_autocmd("WinNew", {
@@ -30,18 +40,17 @@ vim.api.nvim_create_autocmd("WinNew", {
   callback = function()
     -- ウィンドウの確定後に判定する
     vim.defer_fn(function()
-      if editor_windows() <= (vim.g.max_editor_windows or 2) then
+      local eds = editor_windows()
+      if #eds <= (vim.g.max_editor_windows or 1) then
         return
       end
-      local cur = vim.api.nvim_get_current_win()
-      if not vim.api.nvim_win_is_valid(cur) then
-        return
-      end
-      local cfg = vim.api.nvim_win_get_config(cur)
-      if cfg.relative == "" then
-        vim.notify("エディタは最大 " .. (vim.g.max_editor_windows or 2) .. " 分割までです", vim.log.levels.WARN)
-        pcall(vim.api.nvim_win_close, cur, true)
-      end
+      -- 新しい方(窓ID最大)のエディタ窓を閉じる。
+      -- フォーカス中の窓を無条件に閉じると、開いたばかりのターミナル等が
+      -- 身代わりに閉じられるため、ターミナルは絶対に対象にしない
+      table.sort(eds)
+      local target = eds[#eds]
+      vim.notify("エディタは単一画面のみです", vim.log.levels.WARN)
+      pcall(vim.api.nvim_win_close, target, true)
     end, 50)
   end,
 })
@@ -60,12 +69,17 @@ for _, k in ipairs(nav_keys) do
 end
 
 -- ==============================
--- VSCode 風の分割キー
+-- 単一画面運用のウィンドウキー
+-- (エディタ分割は使わない運用)
 -- ==============================
-vim.keymap.set("n", "<leader>|", "<cmd>vsplit<CR>", { silent = true, desc = "左右に分割" })
-vim.keymap.set("n", "<leader>-", "<cmd>split<CR>", { silent = true, desc = "上下に分割" })
+vim.keymap.set("n", "<leader>wo", "<cmd>only<CR>", { silent = true, desc = "単一画面に戻す" })
 vim.keymap.set("n", "<leader>w=", "<C-w>=", { silent = true, desc = "ウィンドウ幅を均等化" })
 vim.keymap.set("n", "<leader>wd", "<C-w>q", { silent = true, desc = "ウィンドウを閉じる" })
+-- ターミナル(下部パネル)の高さ調整用: 通常のウィンドウリサイズと共通
+vim.keymap.set("n", "<leader>w+", "<cmd>resize +2<CR>", { silent = true, desc = "ウィンドウ高さを+2" })
+vim.keymap.set("n", "<leader>w-", "<cmd>resize -2<CR>", { silent = true, desc = "ウィンドウ高さを-2" })
+vim.keymap.set("n", "<leader>w>", "<cmd>vertical resize +5<CR>", { silent = true, desc = "ウィンドウ幅を+5" })
+vim.keymap.set("n", "<leader>w<", "<cmd>vertical resize -5<CR>", { silent = true, desc = "ウィンドウ幅を-5" })
 
 -- ==============================
 -- ターミナル（下部パネル）の操作性
