@@ -3,12 +3,12 @@
 -- バッファ・窓・配置をスロットごとに個別保持し、他方へ絶対に触れない。
 -- 配置は固定:
 --   シェル    : 右カラム全高(約40%幅)
---   opencode  : 下部(エディタの下。高さ20行)
+--   opencode  : 下部(エディタの下。約25%高)
 -- 開くたびにサイズを掛け直すため、手動リサイズ後も次回開閉で仕様に戻る。
 local M = {}
 
-local SHELL_WIDTH_RATIO = 0.4
-local OPENCODE_HEIGHT = 20
+local SHELL_WIDTH_RATIO = 0.325
+local OPENCODE_HEIGHT_RATIO = 0.375
 
 -- ターミナル窓の視認性: ベースより少し明るい背景 + 白い境界線
 -- (エディタ側は透明のまま。colorscheme再読込に追従させる)
@@ -141,7 +141,7 @@ local function open_opencode()
       return
     end
   end
-  vim.api.nvim_win_set_height(win, OPENCODE_HEIGHT)
+  vim.api.nvim_win_set_height(win, math.floor(vim.o.lines * OPENCODE_HEIGHT_RATIO))
   slot.win = win
   decorate(win, slot.name)
   pcall(vim.cmd, "startinsert")
