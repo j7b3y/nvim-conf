@@ -4,7 +4,7 @@ vim.g.maplocalleader = " "
 require("config.lazy")
 require("config.layout")
 require("config.lazygit")
-require("config.opencode_term").setup()
+require("config.terminal").setup()
 
 vim.opt.number = true
 -- ステータスラインは画面最下部に1本化(lualineのglobalstatusと連動)。

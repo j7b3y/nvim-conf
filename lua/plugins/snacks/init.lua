@@ -22,14 +22,16 @@ return {
     bigfile = { enabled = true },
     dashboard = require("plugins.snacks.dashboard"),
     explorer = { enabled = true },
-    indent = { enabled = true },
     input = { enabled = true },
     notifier = { enabled = true },
     quickfile = { enabled = true },
-    scope = { enabled = true },
-    scroll = { enabled = true },
     statuscolumn = { enabled = true },
     words = { enabled = true },
+    -- 常駐負荷の削減: 見た目系（インデントガイド・スコープ強調・スムーズスクロール）
+    -- は無効化。ハイライトは treesitter が担当する
+    indent = { enabled = false },
+    scope = { enabled = false },
+    scroll = { enabled = false },
     -- SSH/CLI 環境では画像表示(ueberzugpp等)が使えないため無効
     image = { enabled = false },
     picker = {

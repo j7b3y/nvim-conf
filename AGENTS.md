@@ -13,14 +13,17 @@
 |---|---|
 | `init.lua` | エントリーポイント(基本オプション・キーマップのみ) |
 | `lua/config/lazy.lua` | lazy.nvim のブートストラップ |
-| `lua/config/layout.lua` | VSCode風レイアウト(最大2分割・ウィンドウキー) |
+| `lua/config/layout.lua` | VSCode風レイアウト(ウィンドウ移動・リサイズ。分割は自由) |
 | `lua/config/lazygit.lua` | lazygit 自動導入(バージョン固定) |
+| `lua/config/terminal.lua` | 右カラム汎用ターミナルの操作(エージェント連携は撤去済み) |
 | `lua/config/treesitter_compat.lua` | Neovim 0.12 × nvim-treesitter(legacy master) 互換シム |
 | `lua/plugins/*.lua` | プラグイン設定(1ファイル=1プラグイン。lazy.nvim が自動 import) |
 | `lua/plugins/snacks/` | snacks.nvim(spec と dashboard) |
 
 ## 重要な制約・パターン
 
+- **エディタ特化・軽量方針**: nvim 内からターミナルや AI エージェントを積極的に呼び出す構成にはしない。ターミナルは右カラムの汎用シェル(`terminal.lua`)のみ。opencode 等のエージェント連携は撤去済みで、再導入しない。
+- **起動時間・常駐負荷を優先**: `lazy = false` を安易に使わない。`event`/`keys`/`cmd`/`ft` での遅延を徹底する(oil/lualine は遅延化済み)。snacks の見た目系モジュール(indent/scope/scroll)は無効化済み。
 - **汎用設定を維持**: 言語固有の LSP・パーサー・ft-plugin・デバッガを追加しない。言語サポートは拡張ポイントのみ: LSP → `lua/plugins/nvim-lspconfig.lua` の `servers`、パーサー → `nvim-treesitter.lua` の `ensure_installed`、アダプタ → `nvim-dap.lua`。
 - treesitter は `branch = "master"`(legacy)固定。main branch に移行するときは `treesitter_compat.lua` の扱いも見直すこと。
 - lazy-loading 規約: `keys`/`cmd`/`event`/`ft` で可能な限り遅延。deps に `opts = {}` がないと setup が呼ばれない点に注意。`opts` は内部で `require(<plugin名>).setup(opts)` を呼ぶ(モジュール名と setup の互換を確認すること。過去に treesitter で `opts` が無視される事故あり)。

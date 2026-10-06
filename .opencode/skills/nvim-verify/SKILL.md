@@ -40,10 +40,10 @@ nvim --headless -u init.lua --startuptime /tmp/st.log +qa >/dev/null 2>&1; tail 
 
 目安: ~20ms 台(想定外に伸びた場合は eager ロードされたプラグインを疑う)。
 
-## 5. レイアウト・分割制限
+## 5. レイアウト・分割
 
 ```bash
 nvim --headless init.lua "+lua vim.cmd('vsplit | vsplit'); vim.defer_fn(function() io.stderr:write('wins='..#vim.api.nvim_list_wins()..'\n'); vim.cmd('qa!') end, 1200)"
 ```
 
-エディタウィンドウは2つに収まること(通知用 float を除く)。
+エディタ分割は自由（旧・単一画面制限は撤廃済み）。`wins=3` になること（通知用 float を除く）。
