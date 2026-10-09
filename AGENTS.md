@@ -12,9 +12,11 @@
 | パス | 役割 |
 |---|---|
 | `init.lua` | エントリーポイント(基本オプション・キーマップのみ) |
-| `lua/config/lazy.lua` | lazy.nvim のブートストラップ |
+| `lua/config/lazy.lua` | lazy.nvim のブートストラップ(0.11 未満はプラグイン無効の基本モード) |
+| `lua/config/env.lua` | 実行環境・外部ツールの検出(Termux/musl/glibc、rg/cc/lazygit/git 等) |
 | `lua/config/layout.lua` | VSCode風レイアウト(ウィンドウ移動・リサイズ。分割は自由) |
-| `lua/config/lazygit.lua` | lazygit 自動導入(バージョン固定) |
+| `lua/config/lazygit.lua` | lazygit 自動導入(対応環境のみ。Termux/musl では手動案内) |
+| `lua/config/session.lua` | セッション管理(Neovim 内蔵のみ。fzf 等は不要) |
 | `lua/config/terminal.lua` | 右カラム汎用ターミナルの操作(エージェント連携は撤去済み) |
 | `lua/config/treesitter_compat.lua` | Neovim 0.12 × nvim-treesitter(legacy master) 互換シム |
 | `lua/plugins/*.lua` | プラグイン設定(1ファイル=1プラグイン。lazy.nvim が自動 import) |
@@ -28,6 +30,8 @@
 - treesitter は `branch = "master"`(legacy)固定。main branch に移行するときは `treesitter_compat.lua` の扱いも見直すこと。
 - lazy-loading 規約: `keys`/`cmd`/`event`/`ft` で可能な限り遅延。deps に `opts = {}` がないと setup が呼ばれない点に注意。`opts` は内部で `require(<plugin名>).setup(opts)` を呼ぶ(モジュール名と setup の互換を確認すること。過去に treesitter で `opts` が無視される事故あり)。
 - LSP は実行環境チェック付き `vim.lsp.enable`(`nvim-lspconfig.lua` を踏襲)。
+- **外部依存は能力検出で吸収**: 外部ツール前提の機能を追加するときは `lua/config/env.lua` の検出を使い、無い環境では「機能だけ無効化+導入方法の通知」または内蔵機能へのフォールバックを必ず実装する(起動・編集でエラーを出さない)。自動ダウンロードは `env.can_run_prebuilt()` が true の環境(glibc Linux/macOS)のみで行う。
+- **Neovim 0.11 未満は基本モード**: `lua/config/lazy.lua` が起動時にバージョンを判定し、プラグインを読み込まず `init.lua` の基本設定だけで動く。
 - コメント・`desc`・README は**日本語**で書く。既存スタイル(lazy.nvim spec 形式)に倣う。
 - キーマップの追加・変更をしたら **README.md の該当行を必ず更新**。which-key のグループ名(`which-key.nvim.lua`)とも整合させる。
 - `lazy-lock.json` は git 管理下・バージョン固定に使用。`:Lazy! sync` 後にコミット対象になる。
@@ -41,6 +45,8 @@ nvim --headless "+Lazy! sync" +qa                                   # プラグ�
 nvim --headless init.lua "+edit README.md" "+lua ..."               # 起動エラー・messages 確認
 nvim --headless -u init.lua --startuptime /tmp/st.log +qa           # 起動時間
 ```
+
+> OS 付属の nvim が 0.11 未満の場合は「基本モードの起動確認」しかできない。プラグイン込みの検証は 0.11+ の nvim バイナリ(`~/.local/bin` 等)で行うこと。
 
 ## スキル
 

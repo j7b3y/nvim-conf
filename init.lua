@@ -5,6 +5,7 @@ require("config.lazy")
 require("config.layout")
 require("config.lazygit")
 require("config.terminal").setup()
+require("config.session").setup()
 
 vim.opt.number = true
 -- ステータスラインは画面最下部に1本化(lualineのglobalstatusと連動)。
@@ -17,6 +18,10 @@ vim.opt.relativenumber = false
 vim.opt.cursorline = true
 vim.opt.helplang = 'ja'
 vim.opt.clipboard = "unnamedplus"
+-- マウスはクリックでのカーソル移動とホイールスクロールのみ許可する。
+-- 'v' を外すとドラッグ選択によるビジュアルモード開始が無効になる
+-- (誤クリックで選択がついてくるのを防ぐ。選択は v キーで開始する)
+vim.opt.mouse = "ni"
 vim.keymap.set("i", "jk", "<Esc>")
 vim.keymap.set("n", "<Esc><Esc>", ":nohlsearch<CR>", { silent = true })
 

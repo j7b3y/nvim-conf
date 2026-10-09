@@ -1,3 +1,16 @@
+-- Neovim 0.11 未満ではプラグインを読み込まず、init.lua の基本設定のみで起動する。
+-- (ディストリビューション付属の古い nvim でも「基本機能だけ」で編集できるようにする)
+if vim.fn.has("nvim-0.11") ~= 1 then
+  vim.schedule(function()
+    vim.notify(
+      "Neovim 0.10 以下を検出したため、プラグインを無効化して基本設定のみで起動します",
+      vim.log.levels.WARN,
+      { title = "nvim" }
+    )
+  end)
+  return
+end
+
 -- Bootstrap lazy.nvim
 local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
 if not (vim.uv or vim.loop).fs_stat(lazypath) then

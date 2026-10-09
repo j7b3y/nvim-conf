@@ -1,1 +1,4 @@
 lazy-lock.json
+# lazygit 自動導入の残骸(誤コミット防止)
+/lazygit
+/lazygit.tar.gz

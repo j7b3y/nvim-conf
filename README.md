@@ -2,31 +2,47 @@
 
 > VSCode から移行した人向けに、「何をしたいか」ベースで整理しています。
 > この設定は **SSH 接続の CLI 環境**（ブラウザ・GUI が使えないリモートサーバー）での利用を前提に調整されています。
+> Linux 全般・Termux でも動くよう、外部ツールが無い環境では該当機能だけを自動で無効化し、Neovim 内蔵機能へフォールバックします。
 
 ## セットアップ
+
+前提: **Neovim 0.11 以上**(Termux の `pkg install neovim` で入る最新版で可)。
+0.10 以下ではプラグインを読み込まず、`init.lua` の基本設定のみで起動します。
 
 ```bash
 git clone <このリポジトリ> ~/.config/nvim
 nvim
 ```
 
-これだけで完了です。初回起動時に以下が自動で行われます。
+初回起動時に **lazy.nvim** の導入と **プラグインの同期**(lazy-lock.json でバージョン固定)が自動で行われます。
 
-1. **lazy.nvim**（プラグインマネージャ）の自動インストール
-2. **全プラグインの自動同期**（lazy-lock.json でバージョン固定）
-3. **lazygit の自動導入**（`~/.local/bin/lazygit` に v0.65.0 の静的バイナリをダウンロード。ディストリビューション非依存）
+### 外部ツールと、無い場合の動き
 
-必要な外部ツール（システムにインストール不要）：
+追加の依存は「必須」にしていません。無い環境では該当機能だけを自動で無効化し、可能なものは Neovim 内蔵機能へフォールバックします。
 
-| ツール | 用途 | 備考 |
-|---|---|---|
-| `git` | 必須 | ほぼ必ず導入済み |
-| `rg` (ripgrep) | 全文検索 `<leader>sg` | 無い場合は grep 検索のみ不可 |
-| `curl` / `tar` | lazygit 自動導入 | 初回のみ |
-| `make` / `gcc` | 一部プラグインのビルド | ほぼ必ず導入済み |
+| ツール | 必須? | 使う機能 | 無い場合の動き |
+|---|---|---|---|
+| `git` | 必須 | プラグイン取得・Git 連携 | プラグイン導入不可。gitsigns 等は自動で無効化 |
+| `curl` + `tar` | 任意 | lazygit 自動導入 | 自動導入をスキップ |
+| `rg` (ripgrep) | 任意 | 全文検索 `<leader>sg` / grug-far | 内蔵 `:vimgrep` + quickfix にフォールバック(導入方法を通知) |
+| C コンパイラ (`cc`/`gcc`/`clang`) | 任意 | treesitter パーサーのビルド | ビルド・自動導入をスキップ(Neovim 同梱パーサーでハイライト) |
+| `lazygit` | 任意 | `<leader>gg` / `<leader>lg` | 自動導入は後述の対応環境のみ。無い場合はキー押下で導入方法を通知 |
+| `lua_ls` (LSP) | 任意 | 補完・定義ジャンプ | glibc Linux / macOS では mason が自動導入。それ以外は PATH 上のものだけ有効化 |
 
-> LSP は言語固有の設定を含まない汎用構成です。`lua/plugins/nvim-lspconfig.lua` の `servers` にサーバー名を追加すると、mason が `~/.local/share/nvim/mason` へ自動インストールします（システムへのインストールは行いません）。デフォルトは nvim 設定編集用の `lua_ls` のみ。
-> 実行環境（node / go / bundler など）が無いサーバーは、エラーにならないよう自動で無効化され、その旨が通知されます。
+- **lazygit の自動導入**は、配布バイナリが動く環境(glibc の Linux x64/arm64・macOS)でのみ実行します。Termux(Android)や musl(Alpine 等)では自動ダウンロードせず、キー押下時に `pkg install lazygit` / `apk add lazygit` などの案内を表示します。
+- **mason** は Termux / musl では組み込みません(配布バイナリが動かないため)。それらの環境では `lua_ls` を各パッケージマネージャで入れてください。
+- LSP は言語固有の設定を含まない汎用構成です。`lua/plugins/nvim-lspconfig.lua` の `servers` にサーバー名を追加すると、対応環境では mason が `~/.local/share/nvim/mason` へ自動インストールします(システムへのインストールは行いません)。デフォルトは nvim 設定編集用の `lua_ls` のみ。
+
+### Termux
+
+```bash
+pkg install neovim git
+# お好みで(無くても基本機能は動きます)
+pkg install ripgrep fd clang lazygit lua-language-server
+```
+
+- ripgrep / fd / clang / lazygit / lua-language-server は Termux の公式パッケージで導入できます。
+- `~/.local/bin` を PATH に通しておくと、lazygit 等を手動配置した場合にも拾えます。
 
 ## 画面レイアウト（VSCode 風）
 
@@ -151,9 +167,11 @@ LSP が動いているバッファでのみ有効（有効な言語は `lua/plug
 | カーソル下の単語を検索 | `*` （下）/ `#` （上） | なし |
 | 検索ハイライトを消す | `Esc Esc` | なし |
 
+> `rg` (ripgrep) が無い環境では、`<leader>sg` / `<leader>fg` は Neovim 内蔵の `:vimgrep` + quickfix に自動で切り替わります（初回に導入方法を通知）。
+
 ### Grep して一括置換（grug-far.nvim）
 
-検索結果がバッファに出るので、**バッファ上でテキストを直接書き換えて反映**できます。
+検索結果がバッファに出るので、**バッファ上でテキストを直接書き換えて反映**できます。`rg` (ripgrep) が必要です（無い場合はキー押下時に導入方法を通知）。
 
 | やりたいこと | キー |
 |---|---|
@@ -234,7 +252,7 @@ grug-far バッファの中での操作：
 | lazygit を開く（Snacks） | `<leader>gg` |
 | lazygit を開く（lazygit.nvim） | `<leader>lg` |
 
-lazygit は初回起動時に `~/.local/bin` へ自動導入されます（要ネットワーク）。手動で入れたい場合は任意のバイナリを `~/.local/bin/lazygit` に置いてください。
+lazygit は初回起動時に `~/.local/bin` へ自動導入されます（要ネットワーク）。ただし配布バイナリが動く **glibc の Linux (x64/arm64) と macOS のみ**で、Termux / musl (Alpine 等) では自動導入せず、キー押下時に `pkg install lazygit` などの案内を表示します。手動で入れたい場合は任意のバイナリを `~/.local/bin/lazygit` に置いてください。
 
 ### GitHub 連携
 
@@ -272,6 +290,9 @@ lazygit は初回起動時に `~/.local/bin` へ自動導入されます（要�
 | 現在の状態を新しいセッションとして保存 | `<leader>sn` |
 | 現在のセッションを上書き更新 | `<leader>su` |
 | セッションを削除 | `<leader>sd` |
+
+- ピッカーは Neovim 内蔵の `vim.ui.select` / `vim.ui.input` を使うため、fzf などの外部ツールは不要です（Termux でも同じ操作）。
+- 保存先: `~/.local/state/nvim/sessions/`。
 
 ---
 
@@ -345,6 +366,8 @@ lazygit は初回起動時に `~/.local/bin` へ自動導入されます（要�
 | `>` / `<` | 選択範囲をインデント 増 / 減 |
 | `=` | 選択範囲を自動整形 |
 
+> マウスはクリックでのカーソル移動とホイールスクロールのみ有効です。マウスドラッグで選択（ビジュアルモード）は始まらない設定です（誤クリックで選択がついてくるのを防ぐため）。選択は `v` / `V` / `Ctrl+v` で開始してください。
+
 ---
 
 ## ファイル構成
@@ -355,9 +378,11 @@ lazygit は初回起動時に `~/.local/bin` へ自動導入されます（要�
 ├── lazy-lock.json            # プラグインのバージョン固定
 └── lua/
     ├── config/
-    │   ├── lazy.lua          # lazy.nvim のブートストラップ
+    │   ├── lazy.lua          # lazy.nvim のブートストラップ（0.10 以下は基本モード）
+    │   ├── env.lua           # 実行環境・外部ツールの検出（Termux/musl/glibc）
     │   ├── layout.lua        # ウィンドウ移動・リサイズ（分割は自由）
-    │   ├── lazygit.lua       # lazygit の自動導入
+    │   ├── lazygit.lua       # lazygit の自動導入（対応環境のみ）
+    │   ├── session.lua       # セッション管理（Neovim 内蔵のみ）
     │   └── terminal.lua      # 右カラム汎用ターミナルの操作
     └── plugins/              # プラグインごとの設定（1ファイル1プラグイン）
 ```

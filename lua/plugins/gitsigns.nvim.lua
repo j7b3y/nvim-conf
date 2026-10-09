@@ -1,6 +1,8 @@
 return {
   "lewis6991/gitsigns.nvim",
   -- VSCode の Source Control 相当（行単位の変更表示・hunk操作）
+  -- git 本体が無い環境ではエラー通知を避けるため読み込まない
+  enabled = vim.fn.executable("git") == 1,
   event = { "BufReadPre", "BufNewFile" },
   opts = {
     signs = {
